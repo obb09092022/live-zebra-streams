@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { Channel, channels } from "@/lib/channelsData";
+import { Channel, channels, categories } from "@/lib/channelsData";
 
 interface ChannelContextType {
   channels: Channel[];
@@ -8,6 +8,10 @@ interface ChannelContextType {
   setCurrentChannel: (channel: Channel) => void;
   isLoading: boolean;
   setIsLoading: (isLoading: boolean) => void;
+  selectedCategory: string;
+  setSelectedCategory: (category: string) => void;
+  filteredChannels: Channel[];
+  availableCategories: string[];
 }
 
 const ChannelContext = createContext<ChannelContextType | undefined>(undefined);
@@ -23,6 +27,12 @@ export const useChannelContext = () => {
 export const ChannelProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentChannel, setCurrentChannel] = useState<Channel>(channels[0]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [selectedCategory, setSelectedCategory] = useState<string>("Todos");
+  
+  // Filter channels based on selected category
+  const filteredChannels = selectedCategory === "Todos" 
+    ? channels 
+    : channels.filter(channel => channel.categories.includes(selectedCategory));
   
   useEffect(() => {
     // Load last watched channel from localStorage on first render
@@ -47,7 +57,11 @@ export const ChannelProvider: React.FC<{ children: React.ReactNode }> = ({ child
         currentChannel,
         setCurrentChannel,
         isLoading,
-        setIsLoading
+        setIsLoading,
+        selectedCategory,
+        setSelectedCategory,
+        filteredChannels,
+        availableCategories: categories
       }}
     >
       {children}

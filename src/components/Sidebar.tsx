@@ -2,12 +2,19 @@
 import React, { useState } from "react";
 import { useChannelContext } from "@/context/ChannelContext";
 import ChannelCard from "./ChannelCard";
+import CategoriesMenu from "./CategoriesMenu";
 import { ChevronLeft, ChevronRight, Tv } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const Sidebar: React.FC = () => {
-  const { channels } = useChannelContext();
+  const { filteredChannels } = useChannelContext();
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const isMobile = useIsMobile();
+  
+  if (isMobile) {
+    return null; // Don't render sidebar on mobile
+  }
   
   return (
     <div 
@@ -34,9 +41,11 @@ const Sidebar: React.FC = () => {
         </button>
       </div>
       
-      <div className="overflow-y-auto flex-1">
-        <div className="p-2">
-          {channels.map(channel => (
+      <div className="overflow-y-auto flex-1 p-2">
+        {!isCollapsed && <CategoriesMenu />}
+        
+        <div className={isCollapsed ? "mt-4" : ""}>
+          {filteredChannels.map(channel => (
             <ChannelCard 
               key={channel.id} 
               channel={channel} 
