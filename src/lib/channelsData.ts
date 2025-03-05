@@ -91,14 +91,6 @@ export const channels: Channel[] = [
     categories: ["Notícias", "Entretenimento"]
   },
   {
-    id: 13,
-    name: "RTP 1",
-    streamUrl: "https://gcdn.2mdn.net/videoplayback/id/938c1413aa58ec28/itag/347/source/web_video_ads/xpc/EgVovf3BOg%3D%3D/ctier/L/acao/yes/ip/0.0.0.0/ipbits/0/expire/3883851423/sparams/id,itag,source,xpc,ctier,acao,ip,ipbits,expire/signature/63E5AF3BFBD26B6A63D1391C7933725CD9620BBC.7D4C641797D686D407E27AAF032C680D52CADA6E/key/ck2/file/file.mp4",
-    logo: "https://i.imgur.com/DsVYHN0.png",
-    description: "Canal de televisão português",
-    categories: ["Notícias", "Entretenimento", "Cultura"]
-  },
-  {
     id: 14,
     name: "Rede Brasil",
     streamUrl: "https://video09.logicahost.com.br/redebrasiloficial/redebrasiloficial/chunklist_w1421363920.m3u8",
@@ -121,13 +113,5 @@ export const channels: Channel[] = [
     logo: "https://i.imgur.com/OJaEU5B.png",
     description: "Televisão Educativa do Rio Grande do Sul",
     categories: ["Educacional", "Cultura"]
-  },
-  {
-    id: 17,
-    name: "Euronews",
-    streamUrl: "https://r2---sn-bg0e6nel.c.2mdn.net/videoplayback/id/e79db77bdba9c262/itag/37/source/web_video_ads/xpc/EgVovf3BOg%3D%3D/ctier/L/acao/yes/ip/0.0.0.0/ipbits/0/expire/1772719484/sparams/acao,ctier,expire,id,ip,ipbits,itag,met,mh,mip,mm,mn,ms,mv,mvi,pl,rms,source,xpc/signature/13677EEB7AEB4778DE7C6CCF85D368C91F167E7A.6A65285B2D60E56DBBB1E8B41300CD255656D62B/key/cms1/cms_redirect/yes/met/1741183485,/mh/iY/mip/2804:2140:1000:9900:6cc8:5415:c387:7bb3/mm/42/mn/sn-bg0e6nel/ms/onc/mt/1741183233/mv/m/mvi/2/pl/47/rms/onc,onc/file/file.mp4",
-    logo: "https://i.imgur.com/8t9mdg9.png",
-    description: "Canal de notícias europeu com cobertura internacional",
-    categories: ["Notícias"]
   }
 ];

@@ -7,9 +7,14 @@ import { cn } from "@/lib/utils";
 interface ChannelCardProps {
   channel: Channel;
   layout?: "grid" | "list";
+  isAllCategory?: boolean;
 }
 
-const ChannelCard: React.FC<ChannelCardProps> = ({ channel, layout = "grid" }) => {
+const ChannelCard: React.FC<ChannelCardProps> = ({ 
+  channel, 
+  layout = "grid",
+  isAllCategory = false
+}) => {
   const { currentChannel, setCurrentChannel, setIsLoading } = useChannelContext();
   const isActive = currentChannel.id === channel.id;
   
@@ -48,21 +53,37 @@ const ChannelCard: React.FC<ChannelCardProps> = ({ channel, layout = "grid" }) =
     <button
       onClick={handleChannelSelect}
       className={cn(
-        "zebra-card flex flex-col items-center p-1 w-[140px] hover:scale-105 transition-transform duration-200",
-        isActive && "zebra-thumb-active"
+        "zebra-card flex flex-col items-center p-2 hover:scale-105 transition-transform duration-200",
+        isActive && "zebra-thumb-active",
+        isAllCategory ? "w-[180px]" : "w-[140px]"
       )}
     >
-      <div className="w-full aspect-video rounded overflow-hidden bg-black/30 mb-2">
+      <div className={cn(
+        "w-full rounded overflow-hidden bg-black/30 mb-2",
+        isAllCategory ? "aspect-video" : "aspect-video"
+      )}>
         <img 
           src={channel.logo} 
           alt={channel.name} 
           className="w-full h-full object-contain p-2"
           onError={(e) => {
-            (e.target as HTMLImageElement).src = "https://placehold.co/140x80/black/white?text=TV";
+            (e.target as HTMLImageElement).src = isAllCategory 
+              ? "https://placehold.co/180x100/black/white?text=TV"
+              : "https://placehold.co/140x80/black/white?text=TV";
           }}
         />
       </div>
-      <span className="text-sm font-medium truncate w-full text-center">{channel.name}</span>
+      <span className={cn(
+        "font-medium truncate w-full text-center",
+        isAllCategory ? "text-base" : "text-sm"
+      )}>
+        {channel.name}
+      </span>
+      {isAllCategory && (
+        <span className="text-xs text-muted-foreground mt-1 line-clamp-1">
+          {channel.categories.join(" • ")}
+        </span>
+      )}
     </button>
   );
 };
