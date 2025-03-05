@@ -1,13 +1,24 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+
+import React from "react";
+import { ChannelProvider } from "@/context/ChannelContext";
+import Sidebar from "@/components/Sidebar";
+import VideoPlayer from "@/components/VideoPlayer";
+import ChannelCarousel from "@/components/ChannelCarousel";
 
 const Index = () => {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-gray-600">Start building your amazing project here!</p>
+    <ChannelProvider>
+      <div className="min-h-screen flex bg-background">
+        <Sidebar />
+        
+        <main className="flex-1 ml-64 pt-4 pb-8 px-6 overflow-y-auto">
+          <div className="max-w-5xl mx-auto">
+            <VideoPlayer />
+            <ChannelCarousel />
+          </div>
+        </main>
       </div>
-    </div>
+    </ChannelProvider>
   );
 };
 
