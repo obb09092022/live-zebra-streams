@@ -1,14 +1,11 @@
 
 import React, { useState } from "react";
-import { useChannelContext } from "@/context/ChannelContext";
-import ChannelCard from "./ChannelCard";
 import CategoriesMenu from "./CategoriesMenu";
 import { ChevronLeft, ChevronRight, Tv } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 const Sidebar: React.FC = () => {
-  const { filteredChannels } = useChannelContext();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const isMobile = useIsMobile();
   
@@ -43,16 +40,6 @@ const Sidebar: React.FC = () => {
       
       <div className="overflow-y-auto flex-1 p-2">
         {!isCollapsed && <CategoriesMenu />}
-        
-        <div className={isCollapsed ? "mt-4" : ""}>
-          {filteredChannels.map(channel => (
-            <ChannelCard 
-              key={channel.id} 
-              channel={channel} 
-              layout="list" 
-            />
-          ))}
-        </div>
       </div>
       
       <div className="p-2 text-xs text-center text-sidebar-foreground/50 border-t border-sidebar-border">
