@@ -1,8 +1,8 @@
-
 import React, { useEffect, useRef, useState } from "react";
 import Hls from "hls.js";
 import { useChannelContext } from "@/context/ChannelContext";
 import { Maximize, Pause, Play, Volume, Volume2, VolumeX } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const VideoPlayer: React.FC = () => {
   const { currentChannel, isLoading, setIsLoading } = useChannelContext();
