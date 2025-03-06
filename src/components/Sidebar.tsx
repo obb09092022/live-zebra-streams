@@ -1,9 +1,8 @@
-
 import React, { useState } from "react";
-import CategoriesMenu from "./CategoriesMenu";
-import { ChevronLeft, ChevronRight, Tv } from "lucide-react";
+import { ChevronLeft, ChevronRight, Settings, Tv } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Link } from "react-router-dom";
 
 const Sidebar: React.FC = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -38,13 +37,17 @@ const Sidebar: React.FC = () => {
         </button>
       </div>
       
-      <div className="overflow-y-auto flex-1 p-2">
-        {!isCollapsed && <CategoriesMenu />}
-      </div>
+      <div className="flex-1"></div>
       
-      <div className="p-2 text-xs text-center text-sidebar-foreground/50 border-t border-sidebar-border">
+      <div className="p-4 border-t border-sidebar-border">
         {!isCollapsed && (
-          <span>© 2023 TV Zebra</span>
+          <Link 
+            to="/admin" 
+            className="flex items-center gap-2 text-sidebar-foreground hover:text-white transition-colors"
+          >
+            <Settings size={18} />
+            <span>Painel Admin</span>
+          </Link>
         )}
       </div>
     </div>

@@ -13,6 +13,8 @@ interface ChannelContextType {
   filteredChannels: Channel[];
   availableCategories: string[];
   addChannel: (channel: Omit<Channel, "id">) => boolean;
+  updateChannel: (channel: Channel) => boolean;
+  deleteChannel: (id: number) => boolean;
 }
 
 const ChannelContext = createContext<ChannelContextType | undefined>(undefined);
@@ -83,6 +85,66 @@ export const ChannelProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
   };
   
+  // Função para atualizar canal existente
+  const updateChannel = (updatedChannel: Channel): boolean => {
+    try {
+      setChannels(prev => {
+        const channelIndex = prev.findIndex(c => c.id === updatedChannel.id);
+        if (channelIndex === -1) {
+          return prev;
+        }
+        
+        const updatedChannels = [...prev];
+        updatedChannels[channelIndex] = updatedChannel;
+        
+        // Salvar no localStorage
+        localStorage.setItem("zebra-channels", JSON.stringify(updatedChannels));
+        
+        // Se o canal atual for o que está sendo atualizado, atualize-o também
+        if (currentChannel.id === updatedChannel.id) {
+          setCurrentChannel(updatedChannel);
+        }
+        
+        return updatedChannels;
+      });
+      
+      return true;
+    } catch (error) {
+      console.error("Erro ao atualizar canal:", error);
+      return false;
+    }
+  };
+  
+  // Função para excluir canal
+  const deleteChannel = (id: number): boolean => {
+    try {
+      // Não permitir excluir se só tiver um canal
+      if (channels.length <= 1) {
+        console.error("Não é possível excluir o único canal disponível");
+        return false;
+      }
+      
+      setChannels(prev => {
+        const updatedChannels = prev.filter(c => c.id !== id);
+        
+        // Salvar no localStorage
+        localStorage.setItem("zebra-channels", JSON.stringify(updatedChannels));
+        
+        // Se o canal atual for o que está sendo excluído, mude para o primeiro canal
+        if (currentChannel.id === id) {
+          setCurrentChannel(updatedChannels[0]);
+        }
+        
+        return updatedChannels;
+      });
+      
+      return true;
+    } catch (error) {
+      console.error("Erro ao excluir canal:", error);
+      return false;
+    }
+  };
+  
   // Salvar canais no localStorage quando forem alterados
   useEffect(() => {
     localStorage.setItem("zebra-channels", JSON.stringify(channels));
@@ -105,7 +167,9 @@ export const ChannelProvider: React.FC<{ children: React.ReactNode }> = ({ child
         setSelectedCategory,
         filteredChannels,
         availableCategories: categories,
-        addChannel
+        addChannel,
+        updateChannel,
+        deleteChannel
       }}
     >
       {children}

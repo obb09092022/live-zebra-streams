@@ -1,11 +1,12 @@
+
 import React, { useEffect, useRef, useState } from "react";
 import Hls from "hls.js";
 import { useChannelContext } from "@/context/ChannelContext";
-import { Maximize, Pause, Play, Volume, Volume2, VolumeX } from "lucide-react";
+import { ChevronLeft, ChevronRight, Maximize, Pause, Play, Volume, Volume2, VolumeX } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const VideoPlayer: React.FC = () => {
-  const { currentChannel, isLoading, setIsLoading } = useChannelContext();
+  const { currentChannel, isLoading, setIsLoading, channels, setCurrentChannel } = useChannelContext();
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -13,6 +14,7 @@ const VideoPlayer: React.FC = () => {
   const [prevVolume, setPrevVolume] = useState(1);
   const [isMuted, setIsMuted] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showControls, setShowControls] = useState(false);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -138,6 +140,19 @@ const VideoPlayer: React.FC = () => {
     setIsMuted(newVolume === 0);
   };
 
+  const navigateToChannel = (direction: 'next' | 'prev') => {
+    const currentIndex = channels.findIndex(c => c.id === currentChannel.id);
+    let newIndex;
+    
+    if (direction === 'next') {
+      newIndex = currentIndex < channels.length - 1 ? currentIndex + 1 : 0;
+    } else {
+      newIndex = currentIndex > 0 ? currentIndex - 1 : channels.length - 1;
+    }
+    
+    setCurrentChannel(channels[newIndex]);
+  };
+
   return (
     <div 
       ref={containerRef}
@@ -145,6 +160,8 @@ const VideoPlayer: React.FC = () => {
         "zebra-player-container group",
         isFullscreen && "fixed inset-0 bg-black z-50 rounded-none"
       )}
+      onMouseEnter={() => setShowControls(true)}
+      onMouseLeave={() => setShowControls(false)}
     >
       {isLoading && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/60 z-10">
@@ -155,9 +172,34 @@ const VideoPlayer: React.FC = () => {
         </div>
       )}
       
+      {/* Navigation arrows */}
+      <button 
+        onClick={() => navigateToChannel('prev')}
+        className={cn(
+          "absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/40 flex items-center justify-center text-white z-20 transition-all duration-300",
+          showControls || isLoading ? "opacity-100" : "opacity-0",
+          "hover:bg-black/60"
+        )}
+        aria-label="Canal anterior"
+      >
+        <ChevronLeft size={24} />
+      </button>
+      
+      <button 
+        onClick={() => navigateToChannel('next')}
+        className={cn(
+          "absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/40 flex items-center justify-center text-white z-20 transition-all duration-300",
+          showControls || isLoading ? "opacity-100" : "opacity-0",
+          "hover:bg-black/60"
+        )}
+        aria-label="Próximo canal"
+      >
+        <ChevronRight size={24} />
+      </button>
+      
       <video 
         ref={videoRef}
-        className="w-full h-full object-contain animate-channel-switch"
+        className="w-full h-full object-contain"
         playsInline
         autoPlay
         controls={false}

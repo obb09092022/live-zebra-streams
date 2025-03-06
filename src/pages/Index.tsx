@@ -7,6 +7,8 @@ import ChannelCarousel from "@/components/ChannelCarousel";
 import CategoriesMenu from "@/components/CategoriesMenu";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
+import { Link } from "react-router-dom";
+import { Settings } from "lucide-react";
 
 const Index = () => {
   const isMobile = useIsMobile();
@@ -21,11 +23,13 @@ const Index = () => {
           isMobile ? "ml-0" : "ml-64"
         )}>
           <div className="max-w-5xl mx-auto">
-            {isMobile && (
-              <div className="flex items-center justify-between mb-3">
-                <h1 className="text-xl font-bold text-white">TV Zebra</h1>
-              </div>
-            )}
+            <div className="flex items-center justify-between mb-3">
+              <h1 className="text-xl font-bold text-white">TV Zebra</h1>
+              <Link to="/admin" className="flex items-center gap-1 text-sm text-zinc-400 hover:text-white transition-colors">
+                <Settings size={16} />
+                <span>Admin</span>
+              </Link>
+            </div>
             
             {/* Categoria Menu fixo acima do player, apenas visível em desktop */}
             {!isMobile && (
@@ -34,7 +38,10 @@ const Index = () => {
               </div>
             )}
             
-            <VideoPlayer />
+            {/* Player fixo ao rolar a página */}
+            <div className="sticky top-16 z-10 bg-background pt-2 pb-4">
+              <VideoPlayer />
+            </div>
             
             {/* Menu móvel permanece como menu flutuante */}
             {isMobile && <CategoriesMenu />}
