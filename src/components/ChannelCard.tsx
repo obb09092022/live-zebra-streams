@@ -30,21 +30,24 @@ const ChannelCard: React.FC<ChannelCardProps> = ({
       <button
         onClick={handleChannelSelect}
         className={cn(
-          "zebra-sidebar-item w-full text-left",
+          "zebra-sidebar-item w-full text-left group transition-all duration-200 mb-2 bg-sidebar rounded-md hover:bg-beige/20",
           isActive && "zebra-sidebar-item-active"
         )}
       >
-        <div className="w-8 h-8 rounded overflow-hidden flex-shrink-0">
+        <div className="w-12 h-12 rounded overflow-hidden flex-shrink-0 mr-3">
           <img 
             src={channel.logo} 
             alt={channel.name} 
-            className="w-full h-full object-cover"
+            className="w-full h-full object-contain bg-black/20 p-1"
             onError={(e) => {
-              (e.target as HTMLImageElement).src = "https://placehold.co/32x32/black/white?text=TV";
+              (e.target as HTMLImageElement).src = "https://placehold.co/48x48/black/white?text=TV";
             }}
           />
         </div>
-        <span className="truncate">{channel.name}</span>
+        <div className="flex flex-col">
+          <span className="truncate font-medium group-hover:text-white">{channel.name}</span>
+          <span className="text-xs text-muted-foreground line-clamp-1">{channel.description}</span>
+        </div>
       </button>
     );
   }

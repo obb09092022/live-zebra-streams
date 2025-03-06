@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { Channel, channels, categories } from "@/lib/channelsData";
+import { Channel, channels as initialChannels, categories } from "@/lib/channelsData";
 
 interface ChannelContextType {
   channels: Channel[];
@@ -12,6 +12,7 @@ interface ChannelContextType {
   setSelectedCategory: (category: string) => void;
   filteredChannels: Channel[];
   availableCategories: string[];
+  addChannel: (channel: Omit<Channel, "id">) => boolean;
 }
 
 const ChannelContext = createContext<ChannelContextType | undefined>(undefined);
@@ -25,7 +26,24 @@ export const useChannelContext = () => {
 };
 
 export const ChannelProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [currentChannel, setCurrentChannel] = useState<Channel>(channels[0]);
+  const [channels, setChannels] = useState<Channel[]>(() => {
+    // Tentar carregar canais do localStorage
+    const savedChannels = localStorage.getItem("zebra-channels");
+    return savedChannels ? JSON.parse(savedChannels) : initialChannels;
+  });
+  
+  const [currentChannel, setCurrentChannel] = useState<Channel>(() => {
+    // Carregar último canal assistido
+    const savedChannelId = localStorage.getItem("zebra-last-channel");
+    if (savedChannelId) {
+      const channel = channels.find(c => c.id === parseInt(savedChannelId));
+      if (channel) {
+        return channel;
+      }
+    }
+    return channels[0];
+  });
+  
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [selectedCategory, setSelectedCategory] = useState<string>("Todos");
   
@@ -34,18 +52,43 @@ export const ChannelProvider: React.FC<{ children: React.ReactNode }> = ({ child
     ? channels 
     : channels.filter(channel => channel.categories.includes(selectedCategory));
   
-  useEffect(() => {
-    // Load last watched channel from localStorage on first render
-    const savedChannelId = localStorage.getItem("zebra-last-channel");
-    if (savedChannelId) {
-      const channel = channels.find(c => c.id === parseInt(savedChannelId));
-      if (channel) {
-        setCurrentChannel(channel);
+  // Função para adicionar novo canal
+  const addChannel = (channel: Omit<Channel, "id">): boolean => {
+    try {
+      // Verificar limite de 1000 canais
+      if (channels.length >= 1000) {
+        console.error("Limite de 1000 canais atingido");
+        return false;
       }
+      
+      // Gerar novo ID (o maior ID atual + 1)
+      const newId = Math.max(...channels.map(c => c.id), 0) + 1;
+      
+      const newChannel: Channel = {
+        ...channel,
+        id: newId
+      };
+      
+      setChannels(prev => {
+        const updatedChannels = [...prev, newChannel];
+        // Salvar no localStorage
+        localStorage.setItem("zebra-channels", JSON.stringify(updatedChannels));
+        return updatedChannels;
+      });
+      
+      return true;
+    } catch (error) {
+      console.error("Erro ao adicionar canal:", error);
+      return false;
     }
-  }, []);
+  };
   
-  // Save current channel to localStorage whenever it changes
+  // Salvar canais no localStorage quando forem alterados
+  useEffect(() => {
+    localStorage.setItem("zebra-channels", JSON.stringify(channels));
+  }, [channels]);
+  
+  // Salvar último canal assistido no localStorage
   useEffect(() => {
     localStorage.setItem("zebra-last-channel", currentChannel.id.toString());
   }, [currentChannel]);
@@ -61,7 +104,8 @@ export const ChannelProvider: React.FC<{ children: React.ReactNode }> = ({ child
         selectedCategory,
         setSelectedCategory,
         filteredChannels,
-        availableCategories: categories
+        availableCategories: categories,
+        addChannel
       }}
     >
       {children}

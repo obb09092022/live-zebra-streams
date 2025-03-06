@@ -7,10 +7,12 @@ import { Maximize, Pause, Play, Volume, Volume2, VolumeX } from "lucide-react";
 const VideoPlayer: React.FC = () => {
   const { currentChannel, isLoading, setIsLoading } = useChannelContext();
   const videoRef = useRef<HTMLVideoElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [volume, setVolume] = useState(1);
   const [prevVolume, setPrevVolume] = useState(1);
   const [isMuted, setIsMuted] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -68,6 +70,13 @@ const VideoPlayer: React.FC = () => {
     video.addEventListener('play', () => setIsPlaying(true));
     video.addEventListener('pause', () => setIsPlaying(false));
     
+    // Monitorar mudanças no estado de tela cheia
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    
     return () => {
       if (hls) {
         hls.destroy();
@@ -75,6 +84,7 @@ const VideoPlayer: React.FC = () => {
       
       video.removeEventListener('play', () => setIsPlaying(true));
       video.removeEventListener('pause', () => setIsPlaying(false));
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
     };
   }, [currentChannel, setIsLoading]);
 
@@ -92,13 +102,13 @@ const VideoPlayer: React.FC = () => {
   };
 
   const toggleFullscreen = () => {
-    if (videoRef.current) {
+    if (containerRef.current) {
       if (document.fullscreenElement) {
         document.exitFullscreen().catch(err => {
           console.error(`Error attempting to exit full-screen mode: ${err.message}`);
         });
       } else {
-        videoRef.current.requestFullscreen().catch(err => {
+        containerRef.current.requestFullscreen().catch(err => {
           console.error(`Error attempting to request full-screen mode: ${err.message}`);
         });
       }
@@ -129,7 +139,13 @@ const VideoPlayer: React.FC = () => {
   };
 
   return (
-    <div className="zebra-player-container group">
+    <div 
+      ref={containerRef}
+      className={cn(
+        "zebra-player-container group",
+        isFullscreen && "fixed inset-0 bg-black z-50 rounded-none"
+      )}
+    >
       {isLoading && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/60 z-10">
           <div className="flex flex-col items-center gap-3">
@@ -141,7 +157,7 @@ const VideoPlayer: React.FC = () => {
       
       <video 
         ref={videoRef}
-        className="w-full h-full object-cover animate-channel-switch"
+        className="w-full h-full object-contain animate-channel-switch"
         playsInline
         autoPlay
         controls={false}

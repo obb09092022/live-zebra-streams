@@ -27,8 +27,16 @@ const Index = () => {
               </div>
             )}
             
+            {/* Categoria Menu fixo acima do player, apenas visível em desktop */}
+            {!isMobile && (
+              <div className="sticky top-0 z-20 bg-background pb-3 pt-1">
+                <CategoriesMenu />
+              </div>
+            )}
+            
             <VideoPlayer />
             
+            {/* Menu móvel permanece como menu flutuante */}
             {isMobile && <CategoriesMenu />}
             
             <ChannelCarousel />

@@ -83,13 +83,13 @@ const CategoriesMenu: React.FC = () => {
   return (
     <div className="bg-sidebar rounded-lg overflow-hidden mb-4">
       <h3 className="text-sm font-medium p-3 border-b border-sidebar-border">Categorias</h3>
-      <div className="p-2">
+      <div className="flex flex-wrap gap-1 p-2">
         {availableCategories.map((category) => (
           <button
             key={category}
             onClick={() => handleCategorySelect(category)}
             className={cn(
-              "zebra-sidebar-item mb-1 last:mb-0",
+              "zebra-sidebar-item flex-1 min-w-fit py-2",
               selectedCategory === category && "zebra-sidebar-item-active"
             )}
           >
