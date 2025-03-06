@@ -30,23 +30,25 @@ const ChannelCard: React.FC<ChannelCardProps> = ({
       <button
         onClick={handleChannelSelect}
         className={cn(
-          "zebra-sidebar-item w-full text-left group transition-all duration-200 mb-2 bg-sidebar rounded-md hover:bg-beige/20",
+          "zebra-sidebar-item w-full text-left group transition-all duration-200 mb-2 bg-sidebar rounded-md hover:bg-beige/20 hover:text-white",
           isActive && "zebra-sidebar-item-active"
         )}
       >
-        <div className="w-12 h-12 rounded overflow-hidden flex-shrink-0 mr-3">
-          <img 
-            src={channel.logo} 
-            alt={channel.name} 
-            className="w-full h-full object-contain bg-black/20 p-1"
-            onError={(e) => {
-              (e.target as HTMLImageElement).src = "https://placehold.co/48x48/black/white?text=TV";
-            }}
-          />
-        </div>
-        <div className="flex flex-col">
-          <span className="truncate font-medium group-hover:text-white">{channel.name}</span>
-          <span className="text-xs text-muted-foreground line-clamp-1">{channel.description}</span>
+        <div className="flex items-center w-full">
+          <div className="w-12 h-12 rounded overflow-hidden flex-shrink-0 mr-3">
+            <img 
+              src={channel.logo} 
+              alt={channel.name} 
+              className="w-full h-full object-contain bg-black/20 p-1"
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = "https://placehold.co/48x48/black/white?text=TV";
+              }}
+            />
+          </div>
+          <div className="flex flex-col flex-1">
+            <span className="truncate font-medium group-hover:text-white">{channel.name}</span>
+            <span className="text-xs text-muted-foreground line-clamp-1">{channel.description}</span>
+          </div>
         </div>
       </button>
     );

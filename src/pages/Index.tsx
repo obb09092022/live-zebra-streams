@@ -22,7 +22,7 @@ const Index = () => {
           "flex-1 pt-4 pb-8 px-2 sm:px-4 overflow-y-auto",
           isMobile ? "ml-0" : "ml-64"
         )}>
-          <div className="max-w-5xl mx-auto">
+          <div className="max-w-full mx-auto">
             <div className="flex items-center justify-between mb-3">
               <h1 className="text-xl font-bold text-white">TV Zebra</h1>
               <Link to="/admin" className="flex items-center gap-1 text-sm text-zinc-400 hover:text-white transition-colors">
@@ -39,14 +39,34 @@ const Index = () => {
             )}
             
             {/* Player fixo ao rolar a página */}
-            <div className="sticky top-16 z-10 bg-background pt-2 pb-4">
+            <div className="sticky top-16 z-10 bg-background pt-2 pb-4 w-full">
               <VideoPlayer />
             </div>
             
-            {/* Menu móvel permanece como menu flutuante */}
-            {isMobile && <CategoriesMenu />}
+            {/* Menu móvel - botão para mostrar/esconder */}
+            {isMobile && (
+              <div className="mb-4">
+                <button 
+                  className="w-full py-2 bg-sidebar-accent rounded-md text-white flex items-center justify-center"
+                  onClick={() => {
+                    const menuEl = document.getElementById('mobile-categories');
+                    if (menuEl) {
+                      menuEl.classList.toggle('hidden');
+                    }
+                  }}
+                >
+                  Mostrar/Esconder Categorias
+                </button>
+                <div id="mobile-categories" className="hidden mt-2">
+                  <CategoriesMenu />
+                </div>
+              </div>
+            )}
             
-            <ChannelCarousel />
+            {/* Canal list with independent scrolling */}
+            <div className="mt-6 max-h-[calc(100vh-270px)] overflow-y-auto pr-2 pb-4">
+              <ChannelCarousel />
+            </div>
           </div>
         </main>
       </div>

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useChannelContext } from "@/context/ChannelContext";
@@ -136,7 +135,6 @@ const Admin: React.FC = () => {
         description: `O canal ${newChannel.name} foi adicionado.`
       });
       
-      // Limpar formulário
       setNewChannel({
         name: "",
         streamUrl: "",
@@ -388,6 +386,9 @@ const Admin: React.FC = () => {
                       src={channel.logo} 
                       alt={channel.name} 
                       className="w-10 h-10 object-contain rounded bg-white/10 p-1"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = "https://placehold.co/48x48/black/white?text=TV";
+                      }}
                     />
                     <div>
                       <h3 className="font-medium">{channel.name}</h3>

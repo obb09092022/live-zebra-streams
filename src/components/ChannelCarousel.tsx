@@ -9,8 +9,8 @@ const ChannelCarousel: React.FC = () => {
   const isAllCategory = selectedCategory === "Todos";
   
   return (
-    <div className="relative mt-6 px-2">
-      <h3 className="text-lg font-medium mb-3">
+    <div className="relative px-2">
+      <h3 className="text-lg font-medium mb-3 sticky top-0 bg-background py-2">
         {isAllCategory ? "Todos os Canais" : `Canais: ${selectedCategory}`}
       </h3>
       

@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from "react";
 import Hls from "hls.js";
 import { useChannelContext } from "@/context/ChannelContext";
@@ -55,7 +54,6 @@ const VideoPlayer: React.FC = () => {
           }
         });
       } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
-        // For Safari, which has native HLS support
         video.src = currentChannel.streamUrl;
         video.addEventListener("loadedmetadata", () => {
           setIsLoading(false);
@@ -72,7 +70,6 @@ const VideoPlayer: React.FC = () => {
     video.addEventListener('play', () => setIsPlaying(true));
     video.addEventListener('pause', () => setIsPlaying(false));
     
-    // Monitorar mudanças no estado de tela cheia
     const handleFullscreenChange = () => {
       setIsFullscreen(!!document.fullscreenElement);
     };
@@ -157,7 +154,7 @@ const VideoPlayer: React.FC = () => {
     <div 
       ref={containerRef}
       className={cn(
-        "zebra-player-container group",
+        "zebra-player-container group w-full",
         isFullscreen && "fixed inset-0 bg-black z-50 rounded-none"
       )}
       onMouseEnter={() => setShowControls(true)}
@@ -172,7 +169,6 @@ const VideoPlayer: React.FC = () => {
         </div>
       )}
       
-      {/* Navigation arrows */}
       <button 
         onClick={() => navigateToChannel('prev')}
         className={cn(
@@ -199,7 +195,10 @@ const VideoPlayer: React.FC = () => {
       
       <video 
         ref={videoRef}
-        className="w-full h-full object-contain"
+        className={cn(
+          "w-full h-full object-contain", 
+          isFullscreen && "max-h-screen"
+        )}
         playsInline
         autoPlay
         controls={false}
