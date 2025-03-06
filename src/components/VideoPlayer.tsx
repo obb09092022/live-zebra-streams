@@ -1,91 +1,28 @@
-import React, { useEffect, useRef, useState } from "react";
-import Hls from "hls.js";
+
+import React, { useRef, useState } from "react";
 import { useChannelContext } from "@/context/ChannelContext";
-import { ChevronLeft, ChevronRight, Maximize, Pause, Play, Volume, Volume2, VolumeX } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useHlsPlayer } from "@/hooks/useHlsPlayer";
+import LoadingOverlay from "./player/LoadingOverlay";
+import ChannelNavButtons from "./player/ChannelNavButtons";
+import PlaybackControls from "./player/PlaybackControls";
 
 const VideoPlayer: React.FC = () => {
   const { currentChannel, isLoading, setIsLoading, channels, setCurrentChannel } = useChannelContext();
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
   const [volume, setVolume] = useState(1);
   const [prevVolume, setPrevVolume] = useState(1);
   const [isMuted, setIsMuted] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showControls, setShowControls] = useState(false);
-
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    let hls: Hls | null = null;
-
-    const setupHls = () => {
-      setIsLoading(true);
-      
-      if (hls) {
-        hls.destroy();
-      }
-
-      if (Hls.isSupported()) {
-        hls = new Hls({
-          maxBufferLength: 30,
-          maxMaxBufferLength: 60,
-          liveSyncDuration: 3,
-          liveMaxLatencyDuration: 10,
-        });
-        
-        hls.loadSource(currentChannel.streamUrl);
-        hls.attachMedia(video);
-        
-        hls.on(Hls.Events.MANIFEST_PARSED, () => {
-          setIsLoading(false);
-          video.play().catch(error => {
-            console.error("Autoplay was prevented:", error);
-            setIsPlaying(false);
-          });
-        });
-        
-        hls.on(Hls.Events.ERROR, (_, data) => {
-          if (data.fatal) {
-            console.error("HLS.js fatal error:", data);
-            setIsLoading(false);
-          }
-        });
-      } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
-        video.src = currentChannel.streamUrl;
-        video.addEventListener("loadedmetadata", () => {
-          setIsLoading(false);
-          video.play().catch(error => {
-            console.error("Autoplay was prevented:", error);
-            setIsPlaying(false);
-          });
-        });
-      }
-    };
-
-    setupHls();
-
-    video.addEventListener('play', () => setIsPlaying(true));
-    video.addEventListener('pause', () => setIsPlaying(false));
-    
-    const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
-    };
-    
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
-    
-    return () => {
-      if (hls) {
-        hls.destroy();
-      }
-      
-      video.removeEventListener('play', () => setIsPlaying(true));
-      video.removeEventListener('pause', () => setIsPlaying(false));
-      document.removeEventListener('fullscreenchange', handleFullscreenChange);
-    };
-  }, [currentChannel, setIsLoading]);
+  
+  // Use the custom hook for HLS video setup
+  const { isPlaying, setIsPlaying } = useHlsPlayer({
+    videoRef,
+    currentChannel,
+    setIsLoading
+  });
 
   const togglePlay = () => {
     if (videoRef.current) {
@@ -150,6 +87,19 @@ const VideoPlayer: React.FC = () => {
     setCurrentChannel(channels[newIndex]);
   };
 
+  // Track fullscreen state changes
+  React.useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    };
+  }, []);
+
   return (
     <div 
       ref={containerRef}
@@ -160,39 +110,18 @@ const VideoPlayer: React.FC = () => {
       onMouseEnter={() => setShowControls(true)}
       onMouseLeave={() => setShowControls(false)}
     >
-      {isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/60 z-10">
-          <div className="flex flex-col items-center gap-3">
-            <div className="w-12 h-12 rounded-full border-4 border-zebra-500 border-t-transparent animate-spin"></div>
-            <p className="text-white font-medium">Carregando canal...</p>
-          </div>
-        </div>
-      )}
+      {/* Loading overlay */}
+      <LoadingOverlay isLoading={isLoading} />
       
-      <button 
-        onClick={() => navigateToChannel('prev')}
-        className={cn(
-          "absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/40 flex items-center justify-center text-white z-20 transition-all duration-300",
-          showControls || isLoading ? "opacity-100" : "opacity-0",
-          "hover:bg-black/60"
-        )}
-        aria-label="Canal anterior"
-      >
-        <ChevronLeft size={24} />
-      </button>
+      {/* Channel navigation buttons */}
+      <ChannelNavButtons 
+        showControls={showControls}
+        isLoading={isLoading}
+        onPrevChannel={() => navigateToChannel('prev')}
+        onNextChannel={() => navigateToChannel('next')}
+      />
       
-      <button 
-        onClick={() => navigateToChannel('next')}
-        className={cn(
-          "absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/40 flex items-center justify-center text-white z-20 transition-all duration-300",
-          showControls || isLoading ? "opacity-100" : "opacity-0",
-          "hover:bg-black/60"
-        )}
-        aria-label="Próximo canal"
-      >
-        <ChevronRight size={24} />
-      </button>
-      
+      {/* Video element */}
       <video 
         ref={videoRef}
         className={cn(
@@ -204,50 +133,17 @@ const VideoPlayer: React.FC = () => {
         controls={false}
       />
       
-      <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <button 
-              onClick={togglePlay} 
-              className="w-10 h-10 flex items-center justify-center rounded-full bg-zebra-500/80 text-white hover:bg-zebra-600/80 transition-colors"
-            >
-              {isPlaying ? <Pause size={18} /> : <Play size={18} />}
-            </button>
-            
-            <div className="flex items-center gap-2">
-              <button 
-                onClick={toggleMute}
-                className="w-8 h-8 flex items-center justify-center rounded-full bg-black/40 text-white hover:bg-black/60 transition-colors"
-              >
-                {volume === 0 ? <VolumeX size={16} /> : volume < 0.5 ? <Volume2 size={16} /> : <Volume size={16} />}
-              </button>
-              
-              <input
-                type="range"
-                min="0"
-                max="1"
-                step="0.01"
-                value={volume}
-                onChange={handleVolumeChange}
-                className="w-20 h-1.5 bg-white/30 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white"
-              />
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-3">
-            <div className="text-white text-sm font-medium">
-              {currentChannel.name}
-            </div>
-            
-            <button 
-              onClick={toggleFullscreen}
-              className="w-8 h-8 flex items-center justify-center rounded-full bg-black/40 text-white hover:bg-black/60 transition-colors"
-            >
-              <Maximize size={16} />
-            </button>
-          </div>
-        </div>
-      </div>
+      {/* Playback controls */}
+      <PlaybackControls 
+        isPlaying={isPlaying}
+        volume={volume}
+        isMuted={isMuted}
+        currentChannelName={currentChannel.name}
+        onTogglePlay={togglePlay}
+        onToggleMute={toggleMute}
+        onVolumeChange={handleVolumeChange}
+        onToggleFullscreen={toggleFullscreen}
+      />
     </div>
   );
 };
