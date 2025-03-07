@@ -16,12 +16,9 @@ const Index = () => {
   return (
     <ChannelProvider>
       <div className="min-h-screen flex bg-background">
-        <Sidebar />
+        {/* Sidebar is now hidden completely */}
         
-        <main className={cn(
-          "flex-1 pt-4 pb-8 px-2 sm:px-4 overflow-y-auto",
-          isMobile ? "ml-0" : "ml-64"
-        )}>
+        <main className="flex-1 pt-4 pb-8 px-2 sm:px-4 overflow-y-auto">
           <div className="max-w-full mx-auto">
             <div className="flex items-center justify-between mb-3">
               <h1 className="text-xl font-bold text-white">TV Zebra</h1>
@@ -38,14 +35,16 @@ const Index = () => {
               </div>
             )}
             
-            {/* Player fixo ao rolar a página */}
-            <div className="sticky top-16 z-10 bg-background pt-2 pb-4 w-full">
-              <VideoPlayer />
+            {/* Player fixo ao rolar a página - agora ocupa toda a largura */}
+            <div className="fixed top-16 left-0 right-0 z-10 bg-background pt-2 pb-4 px-4 h-[60vh]">
+              <div className="max-w-full mx-auto h-full">
+                <VideoPlayer />
+              </div>
             </div>
             
             {/* Menu móvel - botão para mostrar/esconder */}
             {isMobile && (
-              <div className="mb-4">
+              <div className="mb-4 mt-[60vh]">
                 <button 
                   className="w-full py-2 bg-sidebar-accent rounded-md text-white flex items-center justify-center"
                   onClick={() => {
@@ -63,8 +62,8 @@ const Index = () => {
               </div>
             )}
             
-            {/* Canal list with independent scrolling */}
-            <div className="mt-6 max-h-[calc(100vh-270px)] overflow-y-auto pr-2 pb-4">
+            {/* Channel list now starts below the fixed player */}
+            <div className="mt-[calc(60vh+2rem)] pt-4 border-t border-border/30">
               <ChannelCarousel />
             </div>
           </div>

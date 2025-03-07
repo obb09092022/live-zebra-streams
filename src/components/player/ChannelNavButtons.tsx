@@ -21,25 +21,25 @@ const ChannelNavButtons: React.FC<ChannelNavButtonsProps> = ({
       <button 
         onClick={onPrevChannel}
         className={cn(
-          "absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/40 flex items-center justify-center text-white z-20 transition-all duration-300",
+          "absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-black/60 flex items-center justify-center text-white z-20 transition-all duration-300",
           showControls || isLoading ? "opacity-100" : "opacity-0",
-          "hover:bg-black/60"
+          "hover:bg-black/80 hover:scale-110"
         )}
         aria-label="Canal anterior"
       >
-        <ChevronLeft size={24} />
+        <ChevronLeft size={28} />
       </button>
       
       <button 
         onClick={onNextChannel}
         className={cn(
-          "absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/40 flex items-center justify-center text-white z-20 transition-all duration-300",
+          "absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-black/60 flex items-center justify-center text-white z-20 transition-all duration-300",
           showControls || isLoading ? "opacity-100" : "opacity-0",
-          "hover:bg-black/60"
+          "hover:bg-black/80 hover:scale-110"
         )}
         aria-label="Próximo canal"
       >
-        <ChevronRight size={24} />
+        <ChevronRight size={28} />
       </button>
     </>
   );

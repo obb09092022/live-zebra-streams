@@ -104,7 +104,7 @@ const VideoPlayer: React.FC = () => {
     <div 
       ref={containerRef}
       className={cn(
-        "zebra-player-container group w-full",
+        "zebra-player-container group w-full h-full",
         isFullscreen && "fixed inset-0 bg-black z-50 rounded-none"
       )}
       onMouseEnter={() => setShowControls(true)}
