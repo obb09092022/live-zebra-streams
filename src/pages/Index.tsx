@@ -23,9 +23,9 @@ const Index = () => {
           <div className="fixed top-0 left-0 right-0 z-30 bg-background/95 backdrop-blur-sm border-b border-border/30 px-4 py-3">
             <div className="max-w-full mx-auto flex items-center justify-between">
               <h1 className="text-xl font-bold text-white">TV Zebra</h1>
-              <Link to="/admin" className="flex items-center gap-1 text-sm text-zinc-400 hover:text-white transition-colors">
+              <Link to="/controle" className="flex items-center gap-1 text-sm text-zinc-400 hover:text-white transition-colors">
                 <Settings size={16} />
-                <span>Admin</span>
+                <span>Controle</span>
               </Link>
             </div>
             

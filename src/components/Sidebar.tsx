@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { ChevronLeft, ChevronRight, Settings, Tv } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -42,11 +43,11 @@ const Sidebar: React.FC = () => {
       <div className="p-4 border-t border-sidebar-border">
         {!isCollapsed && (
           <Link 
-            to="/admin" 
+            to="/controle" 
             className="flex items-center gap-2 text-sidebar-foreground hover:text-white transition-colors"
           >
             <Settings size={18} />
-            <span>Painel Admin</span>
+            <span>Painel de Controle</span>
           </Link>
         )}
       </div>
