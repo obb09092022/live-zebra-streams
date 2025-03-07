@@ -14,7 +14,7 @@ const ChannelCarousel: React.FC = () => {
         {isAllCategory ? "Todos os Canais" : `Canais: ${selectedCategory}`}
       </h3>
       
-      <div className="space-y-2 overflow-y-auto max-h-[calc(40vh-2rem)]">
+      <div className="space-y-2 overflow-y-auto">
         {filteredChannels.length > 0 ? (
           filteredChannels.map(channel => (
             <ChannelCard 
