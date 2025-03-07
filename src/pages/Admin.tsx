@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useChannelContext } from "@/context/ChannelContext";
 import { Input } from "@/components/ui/input";
@@ -6,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { Label } from "@/components/ui/label";
 import { Channel } from "@/lib/channelsData";
-import { Edit, Search, Trash2 } from "lucide-react";
+import { Edit, Search, Trash2, ArrowLeft } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -26,26 +27,23 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-interface ChannelFormData extends Omit<Channel, "id"> {}
-
 const Admin: React.FC = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [newChannel, setNewChannel] = useState<ChannelFormData>({
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [deleteChannelId, setDeleteChannelId] = useState<number | null>(null);
+  const [editingChannel, setEditingChannel] = useState<Channel | null>(null);
+  const [newChannel, setNewChannel] = useState<Omit<Channel, "id">>({
     name: "",
     streamUrl: "",
     logo: "",
     description: "",
     categories: []
   });
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [editingChannel, setEditingChannel] = useState<Channel | null>(null);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [deleteChannelId, setDeleteChannelId] = useState<number | null>(null);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  
+
   const { 
     channels, 
     addChannel, 
@@ -76,10 +74,16 @@ const Admin: React.FC = () => {
   };
   
   const handleCategoryToggle = (category: string) => {
-    if (selectedCategories.includes(category)) {
-      setSelectedCategories(selectedCategories.filter(c => c !== category));
+    if (newChannel.categories.includes(category)) {
+      setNewChannel({
+        ...newChannel,
+        categories: newChannel.categories.filter(c => c !== category)
+      });
     } else {
-      setSelectedCategories([...selectedCategories, category]);
+      setNewChannel({
+        ...newChannel,
+        categories: [...newChannel.categories, category]
+      });
     }
   };
   
@@ -113,7 +117,7 @@ const Admin: React.FC = () => {
       return;
     }
     
-    if (selectedCategories.length === 0) {
+    if (newChannel.categories.length === 0) {
       toast({
         title: "Erro ao adicionar canal",
         description: "Selecione pelo menos uma categoria.",
@@ -122,12 +126,7 @@ const Admin: React.FC = () => {
       return;
     }
     
-    const channelToAdd = {
-      ...newChannel,
-      categories: selectedCategories
-    };
-    
-    const success = addChannel(channelToAdd);
+    const success = addChannel(newChannel);
     
     if (success) {
       toast({
@@ -142,7 +141,6 @@ const Admin: React.FC = () => {
         description: "",
         categories: []
       });
-      setSelectedCategories([]);
     } else {
       toast({
         title: "Erro ao adicionar canal",
@@ -232,7 +230,13 @@ const Admin: React.FC = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background px-4">
         <div className="w-full max-w-md p-6 bg-card rounded-lg shadow-lg">
-          <h1 className="text-2xl font-bold text-center mb-6">Painel Administrativo</h1>
+          <div className="flex justify-between items-center mb-6">
+            <h1 className="text-2xl font-bold">Painel Administrativo</h1>
+            <Button variant="outline" size="sm" onClick={() => navigate("/")} className="flex items-center gap-1">
+              <ArrowLeft size={16} />
+              Voltar
+            </Button>
+          </div>
           
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-2">
@@ -264,12 +268,6 @@ const Admin: React.FC = () => {
                 Entrar
               </Button>
             </div>
-            
-            <div className="text-center">
-              <Button variant="link" onClick={() => navigate("/")} className="text-sm">
-                Voltar para o site
-              </Button>
-            </div>
           </form>
         </div>
       </div>
@@ -282,8 +280,9 @@ const Admin: React.FC = () => {
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold">Painel Administrativo</h1>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => navigate("/")}>
-              Voltar para o site
+            <Button variant="outline" onClick={() => navigate("/")} className="flex items-center gap-1">
+              <ArrowLeft size={16} />
+              Voltar ao site
             </Button>
             <Button variant="destructive" onClick={() => setIsAuthenticated(false)}>
               Sair
@@ -347,7 +346,7 @@ const Admin: React.FC = () => {
                   <Button
                     key={category}
                     type="button"
-                    variant={selectedCategories.includes(category) ? "default" : "outline"}
+                    variant={newChannel.categories.includes(category) ? "default" : "outline"}
                     onClick={() => handleCategoryToggle(category)}
                     className="flex items-center gap-2"
                   >
