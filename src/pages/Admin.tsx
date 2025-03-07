@@ -6,50 +6,26 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { Label } from "@/components/ui/label";
+import { ArrowLeft } from "lucide-react";
 import { Channel } from "@/lib/channelsData";
-import { Edit, Search, Trash2, ArrowLeft } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 
 const Admin: React.FC = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [deleteChannelId, setDeleteChannelId] = useState<number | null>(null);
-  const [editingChannel, setEditingChannel] = useState<Channel | null>(null);
-  const [newChannel, setNewChannel] = useState<Omit<Channel, "id">>({
+  
+  const [newChannel, setNewChannel] = useState<Omit<Channel, "id" | "categories">>({
     name: "",
     streamUrl: "",
     logo: "",
-    description: "",
-    categories: []
+    description: ""
   });
-
+  
+  const [channelNumber, setChannelNumber] = useState("");
+  
   const { 
     channels, 
-    addChannel, 
-    availableCategories,
-    updateChannel,
-    deleteChannel 
+    addChannel
   } = useChannelContext();
   
   const navigate = useNavigate();
@@ -73,38 +49,6 @@ const Admin: React.FC = () => {
     }
   };
   
-  const handleCategoryToggle = (category: string) => {
-    if (newChannel.categories.includes(category)) {
-      setNewChannel({
-        ...newChannel,
-        categories: newChannel.categories.filter(c => c !== category)
-      });
-    } else {
-      setNewChannel({
-        ...newChannel,
-        categories: [...newChannel.categories, category]
-      });
-    }
-  };
-  
-  const handleEditCategoryToggle = (category: string) => {
-    if (!editingChannel) return;
-    
-    const currentCategories = [...editingChannel.categories];
-    
-    if (currentCategories.includes(category)) {
-      setEditingChannel({
-        ...editingChannel,
-        categories: currentCategories.filter(c => c !== category)
-      });
-    } else {
-      setEditingChannel({
-        ...editingChannel,
-        categories: [...currentCategories, category]
-      });
-    }
-  };
-  
   const handleAddChannel = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -117,16 +61,34 @@ const Admin: React.FC = () => {
       return;
     }
     
-    if (newChannel.categories.length === 0) {
+    const channelNumberInt = parseInt(channelNumber);
+    if (isNaN(channelNumberInt)) {
       toast({
         title: "Erro ao adicionar canal",
-        description: "Selecione pelo menos uma categoria.",
+        description: "O número do canal deve ser um valor numérico.",
         variant: "destructive"
       });
       return;
     }
     
-    const success = addChannel(newChannel);
+    // Verifica se já existe um canal com esse número
+    const existingChannel = channels.find(c => c.id === channelNumberInt);
+    if (existingChannel) {
+      toast({
+        title: "Erro ao adicionar canal",
+        description: "Já existe um canal com esse número.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    const channelToAdd = {
+      ...newChannel,
+      id: channelNumberInt,
+      categories: ["Entretenimento"] // Categoria padrão para novos canais
+    };
+    
+    const success = addChannel(channelToAdd);
     
     if (success) {
       toast({
@@ -134,13 +96,14 @@ const Admin: React.FC = () => {
         description: `O canal ${newChannel.name} foi adicionado.`
       });
       
+      // Limpar o formulário
       setNewChannel({
         name: "",
         streamUrl: "",
         logo: "",
-        description: "",
-        categories: []
+        description: ""
       });
+      setChannelNumber("");
     } else {
       toast({
         title: "Erro ao adicionar canal",
@@ -149,82 +112,6 @@ const Admin: React.FC = () => {
       });
     }
   };
-  
-  const openEditDialog = (channel: Channel) => {
-    setEditingChannel(channel);
-    setIsEditDialogOpen(true);
-  };
-  
-  const handleUpdateChannel = () => {
-    if (!editingChannel) return;
-    
-    if (!editingChannel.name || !editingChannel.streamUrl || !editingChannel.logo) {
-      toast({
-        title: "Erro ao atualizar canal",
-        description: "Nome, URL do stream e logo são obrigatórios.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    if (editingChannel.categories.length === 0) {
-      toast({
-        title: "Erro ao atualizar canal",
-        description: "Selecione pelo menos uma categoria.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    const success = updateChannel(editingChannel);
-    
-    if (success) {
-      toast({
-        title: "Canal atualizado com sucesso",
-        description: `O canal ${editingChannel.name} foi atualizado.`
-      });
-      setIsEditDialogOpen(false);
-      setEditingChannel(null);
-    } else {
-      toast({
-        title: "Erro ao atualizar canal",
-        description: "Não foi possível atualizar o canal. Verifique os dados e tente novamente.",
-        variant: "destructive"
-      });
-    }
-  };
-  
-  const openDeleteDialog = (channelId: number) => {
-    setDeleteChannelId(channelId);
-    setIsDeleteDialogOpen(true);
-  };
-  
-  const handleDeleteChannel = () => {
-    if (deleteChannelId === null) return;
-    
-    const success = deleteChannel(deleteChannelId);
-    
-    if (success) {
-      toast({
-        title: "Canal excluído com sucesso",
-        description: "O canal foi removido da lista."
-      });
-    } else {
-      toast({
-        title: "Erro ao excluir canal",
-        description: "Não foi possível excluir o canal.",
-        variant: "destructive"
-      });
-    }
-    
-    setIsDeleteDialogOpen(false);
-    setDeleteChannelId(null);
-  };
-  
-  const filteredChannels = channels.filter(channel => 
-    channel.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    channel.description.toLowerCase().includes(searchTerm.toLowerCase())
-  );
   
   if (!isAuthenticated) {
     return (
@@ -279,15 +166,10 @@ const Admin: React.FC = () => {
       <div className="max-w-5xl mx-auto">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold">Painel Administrativo</h1>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={() => navigate("/")} className="flex items-center gap-1">
-              <ArrowLeft size={16} />
-              Voltar ao site
-            </Button>
-            <Button variant="destructive" onClick={() => setIsAuthenticated(false)}>
-              Sair
-            </Button>
-          </div>
+          <Button variant="outline" onClick={() => navigate("/")} className="flex items-center gap-1">
+            <ArrowLeft size={16} />
+            Voltar ao site
+          </Button>
         </div>
         
         <div className="bg-card p-6 rounded-lg shadow-lg mb-6">
@@ -296,18 +178,18 @@ const Admin: React.FC = () => {
           <form onSubmit={handleAddChannel} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="channel-name">Nome do Canal</Label>
+                <Label htmlFor="channel-number">Número do Canal</Label>
                 <Input
-                  id="channel-name"
-                  value={newChannel.name}
-                  onChange={(e) => setNewChannel({...newChannel, name: e.target.value})}
-                  placeholder="Ex: TV Brasil"
+                  id="channel-number"
+                  value={channelNumber}
+                  onChange={(e) => setChannelNumber(e.target.value)}
+                  placeholder="Ex: 1"
                   required
                 />
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="channel-url">URL do Stream</Label>
+                <Label htmlFor="channel-url">URL do Canal</Label>
                 <Input
                   id="channel-url"
                   value={newChannel.streamUrl}
@@ -329,30 +211,24 @@ const Admin: React.FC = () => {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="channel-description">Descrição</Label>
+                <Label htmlFor="channel-name">Nome do Canal</Label>
+                <Input
+                  id="channel-name"
+                  value={newChannel.name}
+                  onChange={(e) => setNewChannel({...newChannel, name: e.target.value})}
+                  placeholder="Ex: TV Brasil"
+                  required
+                />
+              </div>
+              
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="channel-description">Descrição do Canal</Label>
                 <Input
                   id="channel-description"
                   value={newChannel.description}
                   onChange={(e) => setNewChannel({...newChannel, description: e.target.value})}
                   placeholder="Descrição breve do canal"
                 />
-              </div>
-            </div>
-            
-            <div className="space-y-2">
-              <Label className="block mb-2">Categorias</Label>
-              <div className="flex flex-wrap gap-2">
-                {availableCategories.filter(cat => cat !== "Todos").map((category) => (
-                  <Button
-                    key={category}
-                    type="button"
-                    variant={newChannel.categories.includes(category) ? "default" : "outline"}
-                    onClick={() => handleCategoryToggle(category)}
-                    className="flex items-center gap-2"
-                  >
-                    {category}
-                  </Button>
-                ))}
               </div>
             </div>
             
@@ -363,160 +239,49 @@ const Admin: React.FC = () => {
         </div>
         
         <div className="bg-card p-6 rounded-lg shadow-lg">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">Gerenciar Canais</h2>
-            <div className="relative w-64">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
-              <Input
-                placeholder="Buscar canais..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9"
-              />
-            </div>
-          </div>
+          <h2 className="text-xl font-semibold mb-4">Canais Cadastrados</h2>
           
-          <div className="mt-4 space-y-2">
-            {filteredChannels.length > 0 ? (
-              filteredChannels.map(channel => (
-                <div key={channel.id} className="flex items-center justify-between p-3 bg-background rounded-md hover:bg-muted/50 transition-colors">
-                  <div className="flex items-center gap-3">
-                    <img 
-                      src={channel.logo} 
-                      alt={channel.name} 
-                      className="w-10 h-10 object-contain rounded bg-white/10 p-1"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src = "https://placehold.co/48x48/black/white?text=TV";
-                      }}
-                    />
-                    <div>
-                      <h3 className="font-medium">{channel.name}</h3>
-                      <p className="text-sm text-muted-foreground">{channel.categories.join(", ")}</p>
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => openEditDialog(channel)}
-                    >
-                      <Edit size={16} className="mr-1" /> Editar
-                    </Button>
-                    <Button 
-                      variant="destructive" 
-                      size="sm"
-                      onClick={() => openDeleteDialog(channel.id)}
-                    >
-                      <Trash2 size={16} className="mr-1" /> Excluir
-                    </Button>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="text-center py-10 text-muted-foreground">
-                Nenhum canal encontrado.
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-      
-      {/* Edit Channel Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="sm:max-w-[600px]">
-          <DialogHeader>
-            <DialogTitle>Editar Canal</DialogTitle>
-            <DialogDescription>
-              Faça as alterações necessárias nos dados do canal.
-            </DialogDescription>
-          </DialogHeader>
-          
-          {editingChannel && (
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="edit-name">Nome do Canal</Label>
-                  <Input
-                    id="edit-name"
-                    value={editingChannel.name}
-                    onChange={(e) => setEditingChannel({...editingChannel, name: e.target.value})}
-                    required
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="edit-url">URL do Stream</Label>
-                  <Input
-                    id="edit-url"
-                    value={editingChannel.streamUrl}
-                    onChange={(e) => setEditingChannel({...editingChannel, streamUrl: e.target.value})}
-                    required
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="edit-logo">Logo do Canal</Label>
-                  <Input
-                    id="edit-logo"
-                    value={editingChannel.logo}
-                    onChange={(e) => setEditingChannel({...editingChannel, logo: e.target.value})}
-                    required
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="edit-description">Descrição</Label>
-                  <Input
-                    id="edit-description"
-                    value={editingChannel.description}
-                    onChange={(e) => setEditingChannel({...editingChannel, description: e.target.value})}
-                  />
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <Label className="block mb-2">Categorias</Label>
-                <div className="flex flex-wrap gap-2">
-                  {availableCategories.filter(cat => cat !== "Todos").map((category) => (
-                    <Button
-                      key={category}
-                      type="button"
-                      variant={editingChannel.categories.includes(category) ? "default" : "outline"}
-                      onClick={() => handleEditCategoryToggle(category)}
-                      className="flex items-center gap-2"
-                    >
-                      {category}
-                    </Button>
+          {channels.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-border">
+                    <th className="py-2 px-3 text-left">Número</th>
+                    <th className="py-2 px-3 text-left">Logo</th>
+                    <th className="py-2 px-3 text-left">Nome</th>
+                    <th className="py-2 px-3 text-left">URL</th>
+                    <th className="py-2 px-3 text-left">Descrição</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {channels.map(channel => (
+                    <tr key={channel.id} className="border-b border-border/50 hover:bg-muted/30">
+                      <td className="py-2 px-3">{channel.id}</td>
+                      <td className="py-2 px-3">
+                        <img 
+                          src={channel.logo} 
+                          alt={channel.name} 
+                          className="w-10 h-10 object-contain"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = "https://placehold.co/48x48/black/white?text=TV";
+                          }}
+                        />
+                      </td>
+                      <td className="py-2 px-3">{channel.name}</td>
+                      <td className="py-2 px-3 text-xs max-w-[200px] truncate">{channel.streamUrl}</td>
+                      <td className="py-2 px-3 max-w-[200px] truncate">{channel.description}</td>
+                    </tr>
                   ))}
-                </div>
-              </div>
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              Nenhum canal cadastrado.
             </div>
           )}
-          
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>Cancelar</Button>
-            <Button onClick={handleUpdateChannel}>Salvar Alterações</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      
-      {/* Delete Confirmation Dialog */}
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
-            <AlertDialogDescription>
-              Tem certeza que deseja excluir este canal? Esta ação não pode ser desfeita.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteChannel} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Excluir
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+        </div>
+      </div>
     </div>
   );
 };
