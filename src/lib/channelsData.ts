@@ -20,7 +20,7 @@ export const categories = [
 export const channels: Channel[] = [
   {
     id: 1,
-    name: "TV Brasil",
+    name: "TV Brasil do Jacaré de Pata Amarela",
     streamUrl: "https://cdn.live.br1.jmvstream.com/w/LVW-10801/LVW10801_Xvg4R0u57n/chunklist.m3u8",
     logo: "https://seeklogo.com/images/S/sbt-logo-3D30D31294-seeklogo.com.png",
     description: "Canal de televisão pública brasileiro",
