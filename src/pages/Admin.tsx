@@ -8,8 +8,10 @@ import { useToast } from "@/components/ui/use-toast";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft } from "lucide-react";
 import { Channel } from "@/lib/channelsData";
+import { ChannelProvider } from "@/context/ChannelContext";
 
-const Admin: React.FC = () => {
+// Componente interno que tem acesso ao contexto
+const AdminContent: React.FC = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -283,6 +285,15 @@ const Admin: React.FC = () => {
         </div>
       </div>
     </div>
+  );
+};
+
+// Wrapper que fornece o contexto
+const Admin: React.FC = () => {
+  return (
+    <ChannelProvider>
+      <AdminContent />
+    </ChannelProvider>
   );
 };
 

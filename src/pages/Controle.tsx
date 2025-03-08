@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useChannelContext } from "@/context/ChannelContext";
@@ -43,6 +42,7 @@ import {
 } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { ChannelProvider } from "@/context/ChannelContext";
 
 // Definição dos campos do formulário de canal
 interface ChannelFormData {
@@ -203,7 +203,8 @@ const ChannelForm: React.FC<{
   );
 };
 
-const Controle: React.FC = () => {
+// Componente interno que tem acesso ao contexto
+const ControleContent: React.FC = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -235,7 +236,7 @@ const Controle: React.FC = () => {
     if (isAuthenticated) {
       refreshChannels();
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, refreshChannels]);
   
   // Verificar autenticação salva
   useEffect(() => {
@@ -342,7 +343,7 @@ const Controle: React.FC = () => {
   const sortedAndFilteredChannels = [...channels]
     .filter(channel => 
       channel.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      channel.description.toLowerCase().includes(searchTerm.toLowerCase())
+      (channel.description && channel.description.toLowerCase().includes(searchTerm.toLowerCase()))
     )
     .sort((a, b) => {
       if (sortField === 'id') {
@@ -812,6 +813,15 @@ const Controle: React.FC = () => {
         </div>
       </div>
     </div>
+  );
+};
+
+// Wrapper que fornece o contexto
+const Controle: React.FC = () => {
+  return (
+    <ChannelProvider>
+      <ControleContent />
+    </ChannelProvider>
   );
 };
 
