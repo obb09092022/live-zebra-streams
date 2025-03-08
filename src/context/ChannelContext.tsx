@@ -1,6 +1,9 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { Channel, channels as initialChannels, categories } from "@/lib/channelsData";
+import { Channel, categories } from "@/lib/channelsData";
+import { useChannelsApi } from "@/hooks/useChannelsApi";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
 
 interface ChannelContextType {
   channels: Channel[];
@@ -12,9 +15,10 @@ interface ChannelContextType {
   setSelectedCategory: (category: string) => void;
   filteredChannels: Channel[];
   availableCategories: string[];
-  addChannel: (channel: Omit<Channel, "id">) => boolean;
-  updateChannel: (channel: Channel) => boolean;
-  deleteChannel: (id: number) => boolean;
+  addChannel: (channel: Omit<Channel, "id">) => Promise<boolean>;
+  updateChannel: (channel: Channel) => Promise<boolean>;
+  deleteChannel: (id: number) => Promise<boolean>;
+  refreshChannels: () => Promise<void>;
 }
 
 const ChannelContext = createContext<ChannelContextType | undefined>(undefined);
@@ -28,57 +32,106 @@ export const useChannelContext = () => {
 };
 
 export const ChannelProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [channels, setChannels] = useState<Channel[]>(() => {
-    // Tentar carregar canais do localStorage
-    const savedChannels = localStorage.getItem("zebra-channels");
-    return savedChannels ? JSON.parse(savedChannels) : initialChannels;
-  });
-  
-  const [currentChannel, setCurrentChannel] = useState<Channel>(() => {
-    // Carregar último canal assistido
-    const savedChannelId = localStorage.getItem("zebra-last-channel");
-    if (savedChannelId) {
-      const channel = channels.find(c => c.id === parseInt(savedChannelId));
-      if (channel) {
-        return channel;
-      }
-    }
-    return channels[0];
-  });
-  
+  const [channels, setChannels] = useState<Channel[]>([]);
+  const [currentChannel, setCurrentChannel] = useState<Channel | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [selectedCategory, setSelectedCategory] = useState<string>("Todos");
+  const [availableCategories, setAvailableCategories] = useState<string[]>(categories);
   
+  const { fetchChannels, addChannel: apiAddChannel, updateChannel: apiUpdateChannel, 
+          deleteChannel: apiDeleteChannel, fetchCategories } = useChannelsApi();
+  const { toast } = useToast();
+
+  // Carregar canais e categorias do Supabase
+  const loadChannelsAndCategories = async () => {
+    setIsLoading(true);
+    try {
+      // Carregar canais
+      const channelsData = await fetchChannels();
+      setChannels(channelsData);
+      
+      // Carregar categorias
+      const categoriesData = await fetchCategories();
+      setAvailableCategories(categoriesData);
+
+      // Definir canal atual (primeiro da lista ou salvo anteriormente)
+      if (channelsData.length > 0) {
+        const savedChannelId = localStorage.getItem("zebra-last-channel");
+        if (savedChannelId) {
+          const channel = channelsData.find(c => c.id === parseInt(savedChannelId));
+          if (channel) {
+            setCurrentChannel(channel);
+          } else {
+            setCurrentChannel(channelsData[0]);
+          }
+        } else {
+          setCurrentChannel(channelsData[0]);
+        }
+      }
+    } catch (error) {
+      console.error("Erro ao carregar dados:", error);
+      toast({
+        title: "Erro ao carregar dados",
+        description: "Não foi possível carregar os canais e categorias. Tentando usar dados locais.",
+        variant: "destructive"
+      });
+
+      // Se falhar, tentar usar dados do localStorage
+      const savedChannels = localStorage.getItem("zebra-channels");
+      if (savedChannels) {
+        setChannels(JSON.parse(savedChannels));
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Atualizar canais quando forem modificados no Supabase
+  useEffect(() => {
+    // Função para atualizar canais ao vivo
+    const setupRealtimeSubscription = async () => {
+      const channel = supabase
+        .channel('schema-db-changes')
+        .on('postgres_changes', 
+          { event: '*', schema: 'public', table: 'channels' },
+          async (payload) => {
+            console.log('Mudança detectada:', payload);
+            // Recarregar os canais
+            await loadChannelsAndCategories();
+          }
+        )
+        .subscribe();
+
+      // Limpar inscrição quando o componente for desmontado
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    };
+
+    setupRealtimeSubscription();
+  }, []);
+
+  // Carregar canais na inicialização
+  useEffect(() => {
+    loadChannelsAndCategories();
+  }, []);
+
   // Filter channels based on selected category
   const filteredChannels = selectedCategory === "Todos" 
     ? channels 
     : channels.filter(channel => channel.categories.includes(selectedCategory));
   
   // Função para adicionar novo canal
-  const addChannel = (channel: Omit<Channel, "id">): boolean => {
+  const addChannel = async (channel: Omit<Channel, "id">): Promise<boolean> => {
     try {
-      // Verificar limite de 1000 canais
-      if (channels.length >= 1000) {
-        console.error("Limite de 1000 canais atingido");
-        return false;
+      const newChannel = await apiAddChannel(channel);
+      
+      if (newChannel) {
+        // Canal já será atualizado pelo realtime
+        return true;
       }
       
-      // Gerar novo ID (o maior ID atual + 1)
-      const newId = Math.max(...channels.map(c => c.id), 0) + 1;
-      
-      const newChannel: Channel = {
-        ...channel,
-        id: newId
-      };
-      
-      setChannels(prev => {
-        const updatedChannels = [...prev, newChannel];
-        // Salvar no localStorage
-        localStorage.setItem("zebra-channels", JSON.stringify(updatedChannels));
-        return updatedChannels;
-      });
-      
-      return true;
+      return false;
     } catch (error) {
       console.error("Erro ao adicionar canal:", error);
       return false;
@@ -86,29 +139,20 @@ export const ChannelProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
   
   // Função para atualizar canal existente
-  const updateChannel = (updatedChannel: Channel): boolean => {
+  const updateChannel = async (updatedChannel: Channel): Promise<boolean> => {
     try {
-      setChannels(prev => {
-        const channelIndex = prev.findIndex(c => c.id === updatedChannel.id);
-        if (channelIndex === -1) {
-          return prev;
-        }
-        
-        const updatedChannels = [...prev];
-        updatedChannels[channelIndex] = updatedChannel;
-        
-        // Salvar no localStorage
-        localStorage.setItem("zebra-channels", JSON.stringify(updatedChannels));
-        
+      const result = await apiUpdateChannel(updatedChannel.id, updatedChannel);
+      
+      if (result) {
         // Se o canal atual for o que está sendo atualizado, atualize-o também
-        if (currentChannel.id === updatedChannel.id) {
+        if (currentChannel && currentChannel.id === updatedChannel.id) {
           setCurrentChannel(updatedChannel);
         }
         
-        return updatedChannels;
-      });
+        return true;
+      }
       
-      return true;
+      return false;
     } catch (error) {
       console.error("Erro ao atualizar canal:", error);
       return false;
@@ -116,60 +160,67 @@ export const ChannelProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
   
   // Função para excluir canal
-  const deleteChannel = (id: number): boolean => {
+  const deleteChannel = async (id: number): Promise<boolean> => {
     try {
       // Não permitir excluir se só tiver um canal
       if (channels.length <= 1) {
-        console.error("Não é possível excluir o único canal disponível");
+        toast({
+          title: "Operação não permitida",
+          description: "Não é possível excluir o único canal disponível",
+          variant: "destructive"
+        });
         return false;
       }
       
-      setChannels(prev => {
-        const updatedChannels = prev.filter(c => c.id !== id);
-        
-        // Salvar no localStorage
-        localStorage.setItem("zebra-channels", JSON.stringify(updatedChannels));
-        
+      const success = await apiDeleteChannel(id);
+      
+      if (success) {
         // Se o canal atual for o que está sendo excluído, mude para o primeiro canal
-        if (currentChannel.id === id) {
-          setCurrentChannel(updatedChannels[0]);
+        if (currentChannel && currentChannel.id === id) {
+          const firstAvailableChannel = channels.find(c => c.id !== id);
+          if (firstAvailableChannel) {
+            setCurrentChannel(firstAvailableChannel);
+          }
         }
         
-        return updatedChannels;
-      });
+        return true;
+      }
       
-      return true;
+      return false;
     } catch (error) {
       console.error("Erro ao excluir canal:", error);
       return false;
     }
   };
-  
-  // Salvar canais no localStorage quando forem alterados
-  useEffect(() => {
-    localStorage.setItem("zebra-channels", JSON.stringify(channels));
-  }, [channels]);
+
+  // Função para atualizar a lista de canais
+  const refreshChannels = async (): Promise<void> => {
+    await loadChannelsAndCategories();
+  };
   
   // Salvar último canal assistido no localStorage
   useEffect(() => {
-    localStorage.setItem("zebra-last-channel", currentChannel.id.toString());
+    if (currentChannel) {
+      localStorage.setItem("zebra-last-channel", currentChannel.id.toString());
+    }
   }, [currentChannel]);
   
   return (
     <ChannelContext.Provider
       value={{
         channels,
-        currentChannel,
+        currentChannel: currentChannel || {} as Channel, // Garante que sempre tem um valor
         setCurrentChannel,
         isLoading,
         setIsLoading,
         selectedCategory,
         setSelectedCategory,
         filteredChannels,
-        availableCategories: categories,
+        availableCategories,
         addChannel,
         updateChannel,
-        deleteChannel
+        deleteChannel,
+        refreshChannels
       }}
     >
       {children}
